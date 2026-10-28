@@ -1,16 +1,14 @@
-# Operational integration — future phase
+# Operational integration — next phase
 
-The current scope is the frontend. These boundaries should be retained when the app becomes operational:
+Existing records are connected through authenticated read-only Supabase reads. The original Google Sheet remains the live workflow until a separate cutover.
 
-1. Use the original Procurement scripts and latest `Procurement HTML` Sheet as the workflow reference.
-2. Preserve existing stage responsibilities and Item Master permissions. Do not assume that TaskOps Admin roles apply to Procurement.
-3. Replace illustrative records with authorized backend reads; enforce each stage permission on the server/database.
-4. Replace preview save handlers with transactional, validated writes and concurrency checks. Keep history append-only.
-5. Preserve original request IDs, item identities, original dates and source lineage; do not deduplicate distinct items merely because they share a request ID.
-6. Connect file inputs to authorized Google Drive uploads, preserving file IDs and links.
-7. Add audited notifications, retry handling and duplicate protection only during operational integration.
-8. Validate TAT against the original review rules: 09:30–17:30 IST, excluding Sundays and second Saturdays; Invoice + Accounting share an eight-working-hour review target.
-9. Replace sample hour indicators with verified working-calendar calculations. Do not publish sample grades as real employee performance.
-10. Reconcile the final Sheet snapshot and verify complete journeys before switching the live workflow.
+Remaining work:
 
-No backend credentials belong in this repository's frontend assets. The sample preview currently requires no credentials.
+1. Complete the first authorized Procurement account setup and verify signed-in browser reads.
+2. Verify stage-by-stage permissions against the original script. This frontend change does not alter existing database policies or introduce an Admin role.
+3. Implement validated transactional writes, stage ownership checks and concurrency protection, keeping history append-only.
+4. Connect document inputs to authorized Google Drive uploads.
+5. Add audited notifications with retry and duplicate protection.
+6. Reconcile the latest Sheet without overwriting history or duplicating items, then validate complete journeys before live cutover.
+
+Never weaken authentication or embed private business records in the public frontend to make data visible. TaskOps and the common dashboard are outside this change.

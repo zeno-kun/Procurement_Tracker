@@ -1,69 +1,50 @@
-# BrightBots Procurement — frontend preview
+# BrightBots Procurement
 
-Portable source for the Procurement interface, ready to open locally or push to your own GitHub repository.
+The frontend reads existing authorized records from the separate Procurement Supabase database. Demo records and browser-local workflow mutations have been removed.
 
-## Open locally
+## Run
 
-Extract the ZIP and double-click **index.html** in Chrome or Edge. No Procurement account, npm installation, or database connection is needed.
-
-For a local web server instead, install Node.js 18 or newer, open a terminal in this folder, and run:
+With Node.js 18 or newer:
 
 ```bash
 npm start
 ```
 
-Then open http://localhost:3000. The server binds to your own computer only. Stop it with Ctrl+C.
+Open http://localhost:3000. Use a **Procurement account** with the company email enabled in the employee directory. This is a separate Auth project; TaskOps passwords are not copied automatically. First-time users can choose **Create Procurement account**, confirm the email, and return to sign in. Signup emails depend on the project's Auth email configuration and provider limits.
 
-## Included screens
+Opening index.html directly may work, but localhost or an HTTPS static host is recommended for authentication and network requests.
 
-- Overview and ten stage inboxes.
-- Multi-item requests and local draft saving.
-- Request tracking, newest first, with item history.
-- Request Approval, Quotation, Vendor Approval, PO, Fund Approval, Payment, Dispatch, QC, Invoice, and Accounting forms.
-- Select All for Vendor and Fund Approval, plus item selection in other queues.
-- Three-vendor quotation comparison.
-- PO/GST calculations, payment balances and QC quantity validation.
-- Catalog, document-filename preview and CSV export.
-- Procurement-only review indicators.
+## Data and access
 
-“Source & readiness” is removed from the menu. No new Admin role or common employee dashboard is included.
+- Records load from Supabase after sign-in, using existing row-level-security policies.
+- Original request IDs, source row references, dates, item codes and Drive links are retained.
+- Multiple items under one request ID remain separate item records.
+- Tracking rows are used when the account cannot read full financial item records. Restricted details and unavailable amounts remain unavailable; they are never replaced with demo values.
+- Real records remain in memory. They are not embedded in this public repository or saved in browser-local storage. Auth sessions use session storage and are cleared on sign-out.
+- The frontend contains a browser-safe Supabase **publishable key**, not a service-role key or database password. Access protection comes from database RLS, not secrecy of the publishable key.
+- The database currently contains an imported Sheet snapshot. Refresh reads the current **database**, not the latest Google Sheet. This change does not set up automatic Sheet synchronization.
 
-## What is operational?
+The baseline checked during implementation contained **192 requests, 541 item rows and 909 catalog entries**. A user can see fewer rows according to existing database permissions. At verification time there were **no Procurement Auth accounts registered**; account creation/confirmation is required before the first signed-in use.
 
-This is a **frontend preview**, not a live purchasing system. All DEMO records are illustrative. Preview actions update only browser-local storage. No live request, approval, payment, upload, email, Sheet update or Supabase write is performed.
+## Current behavior
 
-File inputs retain filenames only; they do not upload file contents. Use **Reset sample** to reset illustrative requests. Browser-local changes do not synchronize between users or devices.
+This release is **read only**. It supports overview, request tracking, stage queues, Select All for inspection, original fields, quotation comparison, linked Drive documents, catalog search, CSV export and imported stage review.
 
-The existing Supabase database and original Google Sheet remain separate and unchanged by this package. This download contains no production records, passwords, API tokens or Supabase keys. Backend integration and live cutover are a later phase.
+New requests, approvals, edits, uploads, payments and notifications are not enabled. Existing workflow writes and TaskOps remain unchanged. No new frontend Admin role, common dashboard, or Source & readiness menu was introduced. Existing database policies are not modified by this repository change.
 
-## Push to GitHub
+Historical measurements use configured-owner attribution when the original actor was not recorded. Current open-stage timing is workload, not a finalized employee score. Invoice + Accounting share the legacy eight-working-hour target.
 
-Create an empty private repository on GitHub. From this extracted folder:
+## Validate
 
 ```bash
-git init
-git add .
-git commit -m "Add Procurement frontend preview"
-git branch -M main
-git remote add origin https://github.com/YOUR-ACCOUNT/YOUR-REPOSITORY.git
-git push -u origin main
+npm run check
+npm test
 ```
 
-Replace `YOUR-ACCOUNT/YOUR-REPOSITORY` with your actual repository path. If you already have a repository, copy these files into its checkout and commit normally instead of running `git init` again.
+Tests use synthetic records, not production fixtures or credentials. Signed-in browser verification requires an actual authorized Procurement account and is not replaced by the model tests.
 
-For GitHub Pages, set **Settings → Pages → Deploy from a branch → main → /(root)**, if your GitHub plan supports Pages for that repository. Pages has its own visibility rules: a private repository alone does not guarantee a private website. The frontend uses relative asset paths and works under a repository subpath. It can also be deployed as static files to Cloudflare Pages, with no build command and the project root as the output directory.
+## Host
 
-## Files
+Serve the repository root as static files. For Cloudflare Pages, no build command is required and the output directory is the repository root. Relative asset paths also support a GitHub Pages repository subpath, when Pages is available for the repository.
 
-```text
-index.html              Main entry point
-assets/app.js           Preview workflow and UI
-assets/workspace.css    Shared visual styles
-assets/frontend.css     Procurement screen and form styles
-assets/favicon.svg      App icon
-server.mjs              Optional dependency-free localhost server
-package.json            npm start / npm run check
-INTEGRATION.md          Future operational integration checklist
-```
-
-Fonts load from Google Fonts when available; system fonts are used offline.
+Do not commit business-data exports, auth sessions, passwords or service-role keys. Do not add business records as static JSON to bypass authentication.

@@ -24,8 +24,8 @@ window.ProcurementModel=(()=>{
     return (fallback[stage]||[]).map(k=>f[k]).find(v=>dateValue(v))||null;
   }
   function map(payload,now=new Date().toISOString()){
-    const catalog=(payload.catalog||[]).map(c=>({code:c.item_code,alternateCode:c.alternate_code,name:c.item_name,unit:c.uom||'—',category:c.data?.Category||'—',status:c.status||'Unspecified'}));
-    const byName=new Map(catalog.map(c=>[normal(c.name),c])),byCode=new Map(catalog.filter(c=>c.code).map(c=>[c.code,c]));
+    const catalog=(payload.catalog||[]).map(c=>({code:c.alternate_code||'',legacyCode:c.item_code,alternateCode:c.item_code,name:c.item_name,unit:c.uom||'—',category:c.data?.['Item Code_Category']||c.data?.Code_type||'—',status:c.status||'Unspecified'}));
+    const byName=new Map(catalog.map(c=>[normal(c.name),c])),byCode=new Map(catalog.flatMap(c=>[c.code,c.legacyCode].filter(Boolean).map(code=>[code,c])));
     const requests=(payload.requests||[]).map(r=>({id:r.id,project:r.project||'—',requester:r.requester_name||r.requester_email||'—',created:r.requested_at,required:null,remarks:''}));
     const reqMap=new Map(requests.map(r=>[r.id,r])),people=new Map((payload.employees||[]).map(p=>[p.id,p.full_name]));
     const full=new Map((payload.items||[]).map(i=>[i.id,i]));
@@ -37,7 +37,7 @@ window.ProcurementModel=(()=>{
       const events=(payload.events||[]).filter(e=>e.item_id===i.id).sort((a,b)=>String(a.completed_at).localeCompare(String(b.completed_at)));
       const history=[...(r.created?[{stage:'Request created',date:r.created,actor:r.requester,remark:'Original request timestamp'}]:[]),...events.map(e=>({stage:e.stage,date:e.completed_at,actor:e.attribution==='verified_stage_owner_action'?'Recorded stage action':'Configured owner: '+(e.owner_ids.map(id=>people.get(id)).filter(Boolean).join(' / ')||'Not available'),remark:e.attribution==='verified_stage_owner_action'?'Recorded stage measurement':'Imported measurement; historical actor not verified',grade:e.color,workingHours:e.working_hours,tatHours:e.tat_hours}))];
       const stage=i.current_stage,elapsed=stage==='Completed'||stage==='Rejected'?null:workingHours(stageStart(stage,fields),now);
-      return {id:i.id,requestId:i.request_id,name:i.item_name,code:i.item_code||cat?.code||'—',unit:cat?.unit||'—',quantity:i.quantity,required:i.required_by,stage,elapsed,fields,history,restricted:!!i.restricted,sourceRow:i.source_row};
+      return {id:i.id,requestId:i.request_id,name:i.item_name,code:cat?cat.code||'—':i.item_code||'—',unit:cat?.unit||'—',quantity:i.quantity,required:i.required_by,stage,elapsed,fields,history,restricted:!!i.restricted,sourceRow:i.source_row};
     });
     return {requests,items,catalog,events:payload.events||[],profile:payload.profile,importedAt:payload.importedAt,sourceModifiedAt:payload.sourceModifiedAt,loadedAt:payload.loadedAt||now};
   }

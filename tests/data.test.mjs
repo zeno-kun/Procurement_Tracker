@@ -39,3 +39,11 @@ test('authenticated data loading paginates past 1000 rows and never writes busin
 test('rejected authentication creates no usable session',async()=>{
  const api=client(async()=>response({error_code:'invalid_credentials'},400));await assert.rejects(()=>api.signIn('person@example.test','wrong-password'),/No matching Procurement login/);assert.equal(api.hasSession(),false);
 });
+test('catalog uses column M codes and N categories while resolving historical column A codes',()=>{
+ const result=model().map({catalog:[{item_code:'OLD-TEST',alternate_code:'NEW-TEST',item_name:'Test item',data:{Code_type:'TEST'}}],items:[{id:'test',request_id:'test',item_name:'Test item',item_code:'OLD-TEST',current_stage:'Completed'}]});
+ assert.equal(result.catalog[0].code,'NEW-TEST');
+ assert.equal(result.catalog[0].category,'TEST');
+ assert.equal(result.catalog[0].legacyCode,'OLD-TEST');
+ assert.equal(result.items[0].code,'NEW-TEST');
+ assert.equal(result.items[0].name,'Test item');
+});

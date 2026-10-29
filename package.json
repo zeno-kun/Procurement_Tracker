@@ -5,7 +5,7 @@
   "description": "Procurement frontend connected to authorized existing Supabase records",
   "scripts": {
     "start": "node server.mjs",
-    "check": "node --check assets/app.js && node --check assets/data.js && node --check assets/model.js && node --check server.mjs",
+    "check": "node --check assets/app.js && node --check assets/data.js && node --check assets/model.js && node --check assets/request-form.js && node --check server.mjs",
     "test": "node --test tests/*.test.mjs"
   },
   "engines": {

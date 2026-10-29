@@ -11,7 +11,7 @@ window.ProcurementData=(()=>{
   async function auth(path,body,token){
     const r=await fetch(root+'/auth/v1/'+path,{method:body===undefined?'GET':'POST',headers:{apikey:key,'Content-Type':'application/json',...(token?{Authorization:'Bearer '+token}:{})},body:body===undefined?undefined:JSON.stringify(body)});
     const data=await r.json().catch(()=>({}));
-    if(!r.ok){const error=new Error(data.error_code==='invalid_credentials'?'No matching Procurement login. If this is your first visit, create a Procurement account and confirm its email. TaskOps passwords are not copied automatically.':data.error_code==='email_not_confirmed'?'Confirm your email, then return here and sign in.':data.msg||data.error_description||data.message||'Authentication failed.');error.status=r.status;throw error;}
+    if(!r.ok){const error=new Error(data.error_code==='invalid_credentials'?'No matching Procurement login. If this is your first visit, create a Procurement account. TaskOps passwords are not copied automatically.':data.error_code==='email_not_confirmed'?'Email confirmation is still enabled in the project settings; it must be disabled there to remove this step.':data.msg||data.error_description||data.message||'Authentication failed.');error.status=r.status;throw error;}
     return data;
   }
   async function accessToken(){

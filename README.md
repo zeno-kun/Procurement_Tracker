@@ -10,7 +10,7 @@ With Node.js 18 or newer:
 npm start
 ```
 
-Open http://localhost:3000. Use a **Procurement account** with the company email enabled in the employee directory. This is a separate Auth project; TaskOps passwords are not copied automatically. First-time users can choose **Create Procurement account**, confirm the email, and return to sign in. Signup emails depend on the project's Auth email configuration and provider limits.
+Open http://localhost:3000. Use a **Procurement account** with the company email enabled in the employee directory. This is a separate Auth project; TaskOps passwords are not copied automatically. First-time users can choose **Create Procurement account**. Email confirmation is still enabled in the Supabase project; removing that step requires a project Auth configuration change, which is not exposed by the current connector. Signup emails depend on the project's Auth email configuration and provider limits.
 
 Opening index.html directly may work, but localhost or an HTTPS static host is recommended for authentication and network requests.
 
@@ -24,13 +24,13 @@ Opening index.html directly may work, but localhost or an HTTPS static host is r
 - The frontend contains a browser-safe Supabase **publishable key**, not a service-role key or database password. Access protection comes from database RLS, not secrecy of the publishable key.
 - The database currently contains an imported Sheet snapshot. Refresh reads the current **database**, not the latest Google Sheet. This change does not set up automatic Sheet synchronization.
 
-The baseline checked during implementation contained **192 requests, 541 item rows and 909 catalog entries**. A user can see fewer rows according to existing database permissions. At verification time there were **no Procurement Auth accounts registered**; account creation/confirmation is required before the first signed-in use.
+The baseline checked during implementation contained **192 requests, 541 item rows and 909 catalog entries**. A user can see fewer rows according to existing database permissions. At the latest check two Procurement Auth accounts existed. Sign-in still follows the project’s current email-confirmation setting.
 
 ## Current behavior
 
 This release is **read only**. It supports overview, request tracking, stage queues, Select All for inspection, original fields, quotation comparison, linked Drive documents, catalog search, CSV export and imported stage review.
 
-New requests, approvals, edits, uploads, payments and notifications are not enabled. Existing workflow writes and TaskOps remain unchanged. No new frontend Admin role, common dashboard, or Source & readiness menu was introduced. Existing database policies are not modified by this repository change.
+A visible **New request** action opens a multi-item draft form. Drafts stay in memory for the current tab; Save draft does not submit a business record. Actual submission, approvals, edits, uploads, payments and notifications are not enabled. Existing workflow writes and TaskOps remain unchanged. No new frontend Admin role, common dashboard, or Source & readiness menu was introduced. Existing database policies are not modified by this repository change.
 
 Historical measurements use configured-owner attribution when the original actor was not recorded. Current open-stage timing is workload, not a finalized employee score. Invoice + Accounting share the legacy eight-working-hour target.
 
@@ -48,3 +48,7 @@ Tests use synthetic records, not production fixtures or credentials. Signed-in b
 Serve the repository root as static files. For Cloudflare Pages, no build command is required and the output directory is the repository root. Relative asset paths also support a GitHub Pages repository subpath, when Pages is available for the repository.
 
 Do not commit business-data exports, auth sessions, passwords or service-role keys. Do not add business records as static JSON to bypass authentication.
+
+## Readability
+
+The interface now uses a 16 px base, larger table and field text, 44 px form controls, fluid headings and responsive grids. On narrow screens, tables scroll within their own panels instead of shrinking text or forcing the entire page wider.

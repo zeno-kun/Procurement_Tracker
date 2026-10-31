@@ -3,8 +3,8 @@
 const root=Deno.env.get('SUPABASE_URL');
 const serviceKey=Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 const publicKey='sb_publishable_qNOYoeK7lSptBJMZwomJUw_FVSNiUNO';
-const folderId='1ovaJdB4Gyx2OUiOudt7fGxO6Ri6IIYmU';
-const ownerEmail='deepali.singh@brightbots.in';
+const projectRef='bezpksgfxkecfpwavndz';
+const ownerEmail='vidit@brightbots.in';
 const cors={'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'authorization,apikey,content-type','Access-Control-Allow-Methods':'POST,OPTIONS'};
 class ApiError extends Error { constructor(message,status=400){super(message);this.status=status;} }
 const reply=(body,status=200)=>new Response(JSON.stringify(body),{status,headers:{...cors,'Content-Type':'application/json'}});
@@ -18,7 +18,7 @@ async function google(url,token,options={}){
  return r;
 }
 async function freshGoogle(){
- const cfg=await db('rpc/procurement_service_config','POST',{});if(!cfg)throw new ApiError('The Drive owner must connect Google services first.',409);
+ const cfg=await db('rpc/procurement_service_config','POST',{});if(!cfg||cfg.email!==ownerEmail||!cfg.folder_id)throw new ApiError('The Drive owner must connect Google services first.',409);
  const r=await fetch('https://oauth2.googleapis.com/token',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({client_id:cfg.client_id,client_secret:cfg.client_secret,refresh_token:cfg.refresh_token,grant_type:'refresh_token'}),signal:AbortSignal.timeout(20000)});
  const token=await r.json();if(!r.ok||!token.access_token)throw new ApiError('Owner Google authorization expired or was revoked. Reconnect Google services.',409);return {token:token.access_token,cfg};
 }
@@ -83,10 +83,12 @@ Deno.serve(async req=>{
  const grant=await response.json();if(!response.ok||!grant.access_token)throw new ApiError('Google authorization or client credentials are invalid.');
  const identity=await (await google('https://www.googleapis.com/oauth2/v3/userinfo',grant.access_token)).json();
  if(identity.email!==ownerEmail||!identity.email_verified)throw new ApiError('Connect the configured owner Google account: '+ownerEmail,403);
- const folder=await (await google('https://www.googleapis.com/drive/v3/files/'+folderId+'?fields=id,name,ownedByMe',grant.access_token)).json();
- if(!folder.ownedByMe||folder.name!=='Procurement Tracker Supabase')throw new ApiError('The target folder must belong to the configured owner.',403);
- // Token scope is checked without sending a test email or reading the mailbox.
  if(!(grant.scope||'').split(' ').includes('https://www.googleapis.com/auth/gmail.send'))throw new ApiError('Approve the send-email permission when connecting Google.');
+ const folderQuery="mimeType='application/vnd.google-apps.folder' and trashed=false and 'me' in owners and appProperties has { key='procurement_project' and value='"+projectRef+"' }";
+ const existing=await (await google('https://www.googleapis.com/drive/v3/files?q='+encodeURIComponent(folderQuery)+'&orderBy=createdTime&fields=files(id,name)',grant.access_token)).json();
+ let folder=existing.files?.[0];
+ if(!folder)folder=await (await google('https://www.googleapis.com/drive/v3/files?fields=id,name',grant.access_token,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:'Procurement Tracker Supabase',mimeType:'application/vnd.google-apps.folder',parents:['root'],appProperties:{procurement_project:projectRef}})})).json();
+ const folderId=folder?.id;if(!folderId)throw new ApiError('Could not create the owner upload folder.',503);
  await db('rpc/procurement_service_config','POST',{config:{client_id:body.client_id,client_secret:body.client_secret,refresh_token:body.refresh_token,email:identity.email,folder_id:folderId}});
  const workerToken=Array.from(crypto.getRandomValues(new Uint8Array(32)),b=>b.toString(16).padStart(2,'0')).join('');
  await db('rpc/register_procurement_mail_worker','POST',{worker_token:workerToken});
@@ -101,7 +103,7 @@ Deno.serve(async req=>{
  if(!(file instanceof File)||file.size<1||file.size>10485760||!allowedMime.has(file.type))throw new ApiError('Use a PDF, image, text, CSV, DOCX or XLSX file up to 10 MB.');
  const prior=await db('procurement_files?id=eq.'+uploadId);
  if(prior.length){if(prior[0].item_id!==id||prior[0].uploaded_by!==actor.id||prior[0].field_key!==field)throw new ApiError('Upload token mismatch',409);return reply({url:'https://drive.google.com/file/d/'+prior[0].drive_file_id+'/view',id:uploadId});}
- const {token:googleToken}=await freshGoogle();
+ const {token:googleToken,cfg}=await freshGoogle();const folderId=cfg.folder_id;
  const q="'"+folderId+"' in parents and trashed=false and appProperties has { key='upload_id' and value='"+uploadId+"' } and appProperties has { key='item_id' and value='"+id+"' } and appProperties has { key='uploaded_by' and value='"+actor.id+"' }";
  const found=await (await google('https://www.googleapis.com/drive/v3/files?q='+encodeURIComponent(q)+'&fields=files(id)',googleToken)).json();let driveId=found.files?.[0]?.id;
  if(!driveId){

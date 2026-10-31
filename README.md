@@ -30,14 +30,11 @@ Item names are preserved. Codes come from Item Master column M, code categories 
 
 ## Owner Drive and email setup
 
-The folder **Procurement Tracker Supabase** was created in the connected user's Drive:
-https://drive.google.com/drive/folders/1ovaJdB4Gyx2OUiOudt7fGxO6Ri6IIYmU
-
-The configured owner is `deepali.singh@brightbots.in`. Other employees do not connect their personal Drives.
+The configured owner is **`vidit@brightbots.in`**, as explicitly requested. The app creates a separate **Procurement Tracker Supabase** folder in Vidit's My Drive during the one-time Google connection. It reuses that app-marked folder on reconnection. The earlier empty Deepali folder is not used or modified. Other employees do not connect their personal Drives.
 
 1. Enable Google Drive API and Gmail API in the OAuth client's Google Cloud project.
 2. Sign into Procurement as the owner using Google.
-3. Open **Drive & email → Authorize owner Google account**. Approve the Drive and send-email permissions and offline access. The Google permission covers Drive; the server restricts uploads to the configured folder.
+3. Open **Drive & email → Authorize owner Google account**. Approve the app-created-files and send-email permissions and offline access. The Drive permission is limited to files created/accessed by this app (`drive.file`); the server pins uploads to its owner folder.
 4. After the return to the app, enter the same OAuth client ID and client secret already configured in Supabase, then choose **Connect Drive & email**. The app sends them directly over HTTPS to its backend. The server validates the Google account, folder ownership and email-send scope before storing the grant encrypted in Supabase Vault.
 
 A changed tunnel URL must be added to Supabase's allowed redirect URLs before authorizing. If the Google consent app is in Testing, the owner must be an allowed test user. A missing or revoked grant must be reauthorized.
@@ -61,7 +58,7 @@ npm run check
 npm test
 ```
 
-19 automated tests cover mapping, pagination, PKCE, credential non-persistence, API authentication, stage controls, file access and queued recipients. `database/verify_workflow.sql` exercises a synthetic two-item request through all ten stages and rolls back every fixture. It checks wrong owners, whole-request approval, stale versions, field restrictions, retry idempotency, PO/GST calculations, partial-payment allocation, file references, audit and notification deduplication. No real email or file is sent by the tests.
+20 automated tests cover mapping, pagination, PKCE, credential non-persistence, API authentication, stage controls, file access and queued recipients. `database/verify_workflow.sql` exercises a synthetic two-item request through all ten stages and rolls back every fixture. It checks wrong owners, whole-request approval, stale versions, field restrictions, retry idempotency, PO/GST calculations, partial-payment allocation, file references, audit and notification deduplication. No real email or file is sent by the tests.
 
 Browser QA uses an isolated synthetic-data copy, not production credentials. Real Google sign-in, uploads and delivery still need the owner's one-time Google authorization and end-to-end account verification.
 

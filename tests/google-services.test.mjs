@@ -27,7 +27,7 @@ test('notification send takes recipients from the queue and restricts the claim 
  const handle=backend(async(url,options={})=>{
  if(url.endsWith('/auth/v1/user'))return json({id:'auth',email:'employee@example.test'});
  if(url.includes('/employees?'))return json([{id:actorId,email:'employee@example.test',is_active:true}]);
- if(url.endsWith('/rpc/procurement_service_config'))return json({client_id:'synthetic',client_secret:'not-a-real-secret',refresh_token:'synthetic',email:'owner@example.test'});
+ if(url.endsWith('/rpc/procurement_service_config'))return json({client_id:'synthetic',client_secret:'not-a-real-secret',refresh_token:'synthetic',email:'vidit@brightbots.in',folder_id:'synthetic-owner-folder'});
  if(url==='https://oauth2.googleapis.com/token')return json({access_token:'synthetic-google-token'});
  if(url.endsWith('/rpc/procurement_claim_mail')){claim=JSON.parse(options.body);return json([{id:fileId,request_id:'QA',recipients:['assigned-owner@example.test'],cc:[],subject:'Synthetic notification',message:'Synthetic only'}]);}
  if(url.endsWith('/messages/send')){mime=Buffer.from(JSON.parse(options.body).raw,'base64url').toString();return json({id:'synthetic-mail-id'});}
@@ -44,7 +44,7 @@ test('a permitted upload is pinned to the configured folder and bound to its ite
  if(url.includes('/request_items?'))return json([{id:itemId,current_stage:'Quotation',version:3}]);
  if(url.includes('/stage_owners?'))return json([{employee_id:actorId}]);
  if(url.includes('/procurement_files?'))return json([]);
- if(url.endsWith('/rpc/procurement_service_config'))return json({client_id:'synthetic',client_secret:'synthetic',refresh_token:'synthetic'});
+ if(url.endsWith('/rpc/procurement_service_config'))return json({client_id:'synthetic',client_secret:'synthetic',refresh_token:'synthetic',email:'vidit@brightbots.in',folder_id:'synthetic-owner-folder'});
  if(url==='https://oauth2.googleapis.com/token')return json({access_token:'synthetic-google-token'});
  if(url.includes('/drive/v3/files?q=')){query=new URL(url).searchParams.get('q');return json({files:[]});}
  if(url.includes('uploadType=resumable')){metadata=JSON.parse(options.body);return new Response('',{status:200,headers:{Location:'https://www.googleapis.com/upload-session/synthetic'}});}
@@ -52,7 +52,7 @@ test('a permitted upload is pinned to the configured folder and bound to its ite
  if(url.endsWith('/procurement_files')){record=JSON.parse(options.body);return json([record]);}throw Error('Unexpected endpoint: '+url);
  });
  const form=new FormData();Object.entries({action:'upload',item_id:itemId,stage:'Quotation',field_key:'Vendor 1 Quote File URL',version:3,upload_id:fileId,folder_id:'ignored-attacker-folder'}).forEach(([k,v])=>form.append(k,String(v)));form.append('file',new File(['synthetic'],'quote.pdf',{type:'application/pdf'}));
- const response=await handle(new Request('https://edge.example.test',{method:'POST',headers:{Authorization:'Bearer '+oauthToken},body:form}));assert.equal(response.status,200);assert.deepEqual(metadata.parents,['1ovaJdB4Gyx2OUiOudt7fGxO6Ri6IIYmU']);assert.equal(metadata.appProperties.uploaded_by,actorId);assert(query.includes(itemId)&&query.includes(actorId));assert.equal(record.item_id,itemId);assert.equal(record.uploaded_by,actorId);assert.equal((await response.json()).url,'https://drive.google.com/file/d/synthetic-drive-id/view');
+ const response=await handle(new Request('https://edge.example.test',{method:'POST',headers:{Authorization:'Bearer '+oauthToken},body:form}));assert.equal(response.status,200);assert.deepEqual(metadata.parents,['synthetic-owner-folder']);assert.equal(metadata.appProperties.uploaded_by,actorId);assert(query.includes(itemId)&&query.includes(actorId));assert.equal(record.item_id,itemId);assert.equal(record.uploaded_by,actorId);assert.equal((await response.json()).url,'https://drive.google.com/file/d/synthetic-drive-id/view');
 });
 test('mail-only worker rejects other operations and never acts as a user credential',async()=>{
  const calls=[];const handle=backend(async(url)=>{calls.push(url);if(url.endsWith('/rpc/procurement_mail_worker_token'))return json('a'.repeat(64));throw Error('Worker accessed an unexpected endpoint');});
@@ -66,4 +66,20 @@ test('incorrect worker tokens are denied without touching Google or the outbox',
 test('scheduled worker waits without sending until the owner connects Google',async()=>{
  const calls=[];const handle=backend(async(url)=>{calls.push(url);if(url.endsWith('/rpc/procurement_mail_worker_token'))return json('a'.repeat(64));if(url.endsWith('/rpc/procurement_service_config'))return json(null);throw Error('Unexpected endpoint');});
  const response=await handle(new Request('https://edge.example.test',{method:'POST',headers:{'X-Procurement-Mail-Token':'a'.repeat(64),'Content-Type':'application/json'},body:'{"action":"mail_worker"}'}));assert.equal(response.status,200);assert.deepEqual(await response.json(),{waiting_for_owner_connection:true});assert.equal(calls.length,2);
+});
+test('Vidit owner connection creates an app folder in his Drive and ignores a supplied destination',async()=>{
+ let folder,stored;
+ const handle=backend(async(url,options={})=>{
+ if(url.endsWith('/auth/v1/user'))return json({id:'auth',email:'vidit@brightbots.in'});
+ if(url.includes('/employees?'))return json([{id:actorId,email:'vidit@brightbots.in',is_active:true}]);
+ if(url==='https://oauth2.googleapis.com/token')return json({access_token:'synthetic-google',scope:'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/gmail.send'});
+ if(url.endsWith('/oauth2/v3/userinfo'))return json({email:'vidit@brightbots.in',email_verified:true});
+ if(url.includes('/drive/v3/files?q='))return json({files:[]});
+ if(url.includes('/drive/v3/files?fields=id,name')){folder=JSON.parse(options.body);return json({id:'vidit-app-folder',name:folder.name});}
+ if(url.endsWith('/rpc/procurement_service_config')){stored=JSON.parse(options.body).config;return json({connected:true});}
+ if(url.endsWith('/rpc/register_procurement_mail_worker'))return json(null);
+ throw Error('Unexpected endpoint: '+url);
+ });
+ const response=await handle(post({action:'connect',client_id:'synthetic-id',client_secret:'synthetic-secret',refresh_token:'synthetic-refresh',folder_id:'ignored-old-folder'}));
+ assert.equal(response.status,200);assert.equal(folder.name,'Procurement Tracker Supabase');assert.deepEqual(folder.parents,['root']);assert.equal(stored.email,'vidit@brightbots.in');assert.equal(stored.folder_id,'vidit-app-folder');assert.equal((await response.json()).folder_id,'vidit-app-folder');
 });

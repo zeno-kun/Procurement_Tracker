@@ -9,6 +9,7 @@ Applied in the Procurement project only:
 5. `database/stage_identity_and_batch_checks.sql`: OAuth identity and whole-request consistency checks.
 6. `database/private_connection_status.sql`: connection-status implementation stays private behind a security-invoker RPC.
 7. `database/mail_worker.sql`: explicitly approved five-minute dispatcher with a mail-only random token in Vault.
+8. `database/switch_google_owner_vidit.sql`: user-approved owner change to vidit@brightbots.in; old grants cannot be used after switching; the new folder is created by the app in Vidit’s Drive during authorization.
 
 The `procurement-google-services` Edge Function is deployed from `backend/google-services.ts`. Gateway JWT checking is disabled because the function performs its own JWT validation against `/auth/v1/user` on every browser request before checking employee, owner and item permissions. Anonymous requests return 401. It never accepts arbitrary Google URLs, Drive destinations or mail recipients from callers.
 

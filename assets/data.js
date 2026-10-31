@@ -58,7 +58,7 @@ window.ProcurementData=(()=>{
     sessionStorage.setItem(oauthKey,JSON.stringify({verifier,connect,created:Date.now()}));
     const redirect=new URL(location.href);redirect.search='';redirect.hash='';
     const url=new URL(root+'/auth/v1/authorize');
-    url.search=new URLSearchParams({provider:'google',redirect_to:redirect.href,code_challenge:challenge,code_challenge_method:'s256',...(connect?{scopes:'openid email profile https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/gmail.send',access_type:'offline',prompt:'consent'}:{prompt:'select_account'})}).toString();
+    url.search=new URLSearchParams({provider:'google',redirect_to:redirect.href,code_challenge:challenge,code_challenge_method:'s256',...(connect?{scopes:'openid email profile https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/gmail.send',access_type:'offline',prompt:'consent select_account'}:{prompt:'select_account'})}).toString();
     location.assign(url.href);
   }
   async function consumeOAuthCallback(){

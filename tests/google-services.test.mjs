@@ -54,3 +54,16 @@ test('a permitted upload is pinned to the configured folder and bound to its ite
  const form=new FormData();Object.entries({action:'upload',item_id:itemId,stage:'Quotation',field_key:'Vendor 1 Quote File URL',version:3,upload_id:fileId,folder_id:'ignored-attacker-folder'}).forEach(([k,v])=>form.append(k,String(v)));form.append('file',new File(['synthetic'],'quote.pdf',{type:'application/pdf'}));
  const response=await handle(new Request('https://edge.example.test',{method:'POST',headers:{Authorization:'Bearer '+oauthToken},body:form}));assert.equal(response.status,200);assert.deepEqual(metadata.parents,['1ovaJdB4Gyx2OUiOudt7fGxO6Ri6IIYmU']);assert.equal(metadata.appProperties.uploaded_by,actorId);assert(query.includes(itemId)&&query.includes(actorId));assert.equal(record.item_id,itemId);assert.equal(record.uploaded_by,actorId);assert.equal((await response.json()).url,'https://drive.google.com/file/d/synthetic-drive-id/view');
 });
+test('mail-only worker rejects other operations and never acts as a user credential',async()=>{
+ const calls=[];const handle=backend(async(url)=>{calls.push(url);if(url.endsWith('/rpc/procurement_mail_worker_token'))return json('a'.repeat(64));throw Error('Worker accessed an unexpected endpoint');});
+ const req=new Request('https://edge.example.test',{method:'POST',headers:{'X-Procurement-Mail-Token':'a'.repeat(64),'Content-Type':'application/json'},body:JSON.stringify({action:'upload',folder_id:'attacker-choice'})});
+ assert.equal((await handle(req)).status,403);assert.equal(calls.length,1);
+});
+test('incorrect worker tokens are denied without touching Google or the outbox',async()=>{
+ const calls=[];const handle=backend(async(url)=>{calls.push(url);if(url.endsWith('/rpc/procurement_mail_worker_token'))return json('a'.repeat(64));throw Error('Unexpected endpoint');});
+ const response=await handle(new Request('https://edge.example.test',{method:'POST',headers:{'X-Procurement-Mail-Token':'b'.repeat(64),'Content-Type':'application/json'},body:'{"action":"mail_worker"}'}));assert.equal(response.status,401);assert.equal(calls.length,1);
+});
+test('scheduled worker waits without sending until the owner connects Google',async()=>{
+ const calls=[];const handle=backend(async(url)=>{calls.push(url);if(url.endsWith('/rpc/procurement_mail_worker_token'))return json('a'.repeat(64));if(url.endsWith('/rpc/procurement_service_config'))return json(null);throw Error('Unexpected endpoint');});
+ const response=await handle(new Request('https://edge.example.test',{method:'POST',headers:{'X-Procurement-Mail-Token':'a'.repeat(64),'Content-Type':'application/json'},body:'{"action":"mail_worker"}'}));assert.equal(response.status,200);assert.deepEqual(await response.json(),{waiting_for_owner_connection:true});assert.equal(calls.length,2);
+});

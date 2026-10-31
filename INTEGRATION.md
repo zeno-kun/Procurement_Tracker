@@ -8,12 +8,13 @@ Applied in the Procurement project only:
 4. `database/google_services.sql`: service-only encrypted Google configuration, queue claiming and owner connection status.
 5. `database/stage_identity_and_batch_checks.sql`: OAuth identity and whole-request consistency checks.
 6. `database/private_connection_status.sql`: connection-status implementation stays private behind a security-invoker RPC.
+7. `database/mail_worker.sql`: explicitly approved five-minute dispatcher with a mail-only random token in Vault.
 
 The `procurement-google-services` Edge Function is deployed from `backend/google-services.ts`. Gateway JWT checking is disabled because the function performs its own JWT validation against `/auth/v1/user` on every browser request before checking employee, owner and item permissions. Anonymous requests return 401. It never accepts arbitrary Google URLs, Drive destinations or mail recipients from callers.
 
 The owner must complete the Drive/email authorization described in README. No Google credential is available from the ChatGPT Drive connection to a standalone app; provider access is separately authorized and stored in Vault. Do not paste secrets into chat or source.
 
-Notifications are attempted after app actions and through the owner's retry button. Scheduled retries are blocked pending explicit approval. The `.proposed.sql` / `.proposed.ts` worker files are not deployed or applied.
+Notifications are attempted after app actions and through the owner's retry button. The user explicitly approved scheduled retries. A five-minute cron job uses a random mail-only token, never a Supabase API key. The deployed Edge handler authenticates this token only for `mail_worker`, processes database-defined recipients, and waits without sending until Google is connected. Normal browser operations continue to require a validated Supabase user JWT.
 
 Latest source check: Procurement HTML modified 29 October 2026 09:10:37.938 UTC; checked 31 October. 541 request items unchanged; 909 catalog entries refreshed. The source Sheet remains read-only to this migration. No destructive refresh, ID replacement, history deletion, common dashboard or TaskOps change was performed.
 

@@ -46,7 +46,7 @@ Uploads are private, bound to an item/stage/actor, and limited to PDF, JPG/PNG/W
 
 Notifications are queued atomically for new requests and stage transitions, addressed to the existing stage owners, with Deepali CC matching the original script. Action saves attempt delivery after the commit. The owner can use **Retry pending notifications**. Failed deliveries stay queued; ambiguous sends are marked for mailbox review and are not automatically resent.
 
-**Background retries are NOT enabled.** Automatic review requires explicit approval for the unattended five-minute mail-only worker and its encrypted dispatcher token. `backend/mail-worker.proposed.sql` and `backend/google-services-mail-worker.proposed.ts` are review proposals only; neither is applied/deployed. The proposal token cannot log into Supabase, read arbitrary records, upload files or choose recipients; it can dispatch already-queued notifications only. Do not apply the proposal without approval.
+**Background retries are enabled every five minutes**, with the user's explicit approval. The scheduler calls the mail-only Edge worker using a random 256-bit dispatcher token encrypted in Vault. This token cannot log into Supabase, read arbitrary records, upload files or choose recipients; it can dispatch already-queued notifications only. No Supabase service-role key is stored as the dispatcher credential. Until the owner connects Google, worker runs return a waiting status without sending anything. Each run claims up to 10 pending/failed notifications; ambiguous sends remain for manual mailbox review. Worker source is `backend/google-services.ts`, with setup in `database/mail_worker.sql`.
 
 ## Data freshness
 
@@ -61,7 +61,7 @@ npm run check
 npm test
 ```
 
-16 automated tests cover mapping, pagination, PKCE, credential non-persistence, API authentication, stage controls, file access and queued recipients. `database/verify_workflow.sql` exercises a synthetic two-item request through all ten stages and rolls back every fixture. It checks wrong owners, whole-request approval, stale versions, field restrictions, retry idempotency, PO/GST calculations, partial-payment allocation, file references, audit and notification deduplication. No real email or file is sent by the tests.
+19 automated tests cover mapping, pagination, PKCE, credential non-persistence, API authentication, stage controls, file access and queued recipients. `database/verify_workflow.sql` exercises a synthetic two-item request through all ten stages and rolls back every fixture. It checks wrong owners, whole-request approval, stale versions, field restrictions, retry idempotency, PO/GST calculations, partial-payment allocation, file references, audit and notification deduplication. No real email or file is sent by the tests.
 
 Browser QA uses an isolated synthetic-data copy, not production credentials. Real Google sign-in, uploads and delivery still need the owner's one-time Google authorization and end-to-end account verification.
 

@@ -1,3 +1,4 @@
+// Approved mail-only dispatcher: no Supabase API key is stored as a worker credential.
 // Google credentials stay in Vault. Every browser request is authenticated server-side.
 const root=Deno.env.get('SUPABASE_URL');
 const serviceKey=Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
@@ -57,6 +58,14 @@ Deno.serve(async req=>{
  if(req.method==='OPTIONS')return new Response(null,{headers:cors});
  if(req.method!=='POST')return reply({message:'POST required'},405);
  try{
+ const workerToken=req.headers.get('X-Procurement-Mail-Token');
+ if(workerToken){
+ const expected=await db('rpc/procurement_mail_worker_token','POST',{});
+ if(!expected||workerToken.length!==expected.length||Array.from(workerToken).reduce((diff,c,n)=>diff|(c.charCodeAt(0)^expected.charCodeAt(n)),0)!==0)throw new ApiError('Invalid mail worker',401);
+ const job=await req.json();if(job.action!=='mail_worker')throw new ApiError('Mail-only credential cannot perform this operation',403);
+ if(!await db('rpc/procurement_service_config','POST',{}))return reply({waiting_for_owner_connection:true});
+ const profiles=await db('employees?select=id,email,is_active&email=eq.'+ownerEmail);const actor=profiles.find(e=>e.email===ownerEmail&&e.is_active);if(!actor)throw new ApiError('Owner disabled',403);return reply(await processMail(actor,null));
+ }
  const authorization=req.headers.get('Authorization')||'';if(!authorization.startsWith('Bearer '))throw new ApiError('Sign in first',401);
  const token=authorization.slice(7);
  const check=await fetch(root+'/auth/v1/user',{headers:{apikey:publicKey,Authorization:authorization},signal:AbortSignal.timeout(15000)});
@@ -79,6 +88,8 @@ Deno.serve(async req=>{
  // Token scope is checked without sending a test email or reading the mailbox.
  if(!(grant.scope||'').split(' ').includes('https://www.googleapis.com/auth/gmail.send'))throw new ApiError('Approve the send-email permission when connecting Google.');
  await db('rpc/procurement_service_config','POST',{config:{client_id:body.client_id,client_secret:body.client_secret,refresh_token:body.refresh_token,email:identity.email,folder_id:folderId}});
+ const workerToken=Array.from(crypto.getRandomValues(new Uint8Array(32)),b=>b.toString(16).padStart(2,'0')).join('');
+ await db('rpc/register_procurement_mail_worker','POST',{worker_token:workerToken});
  return reply({connected:true,folder_id:folderId,email:identity.email});
  }
  if(action==='upload'){

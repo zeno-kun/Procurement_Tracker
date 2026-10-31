@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
+import {webcrypto} from 'node:crypto';
 
 function model(){const ctx=vm.createContext({window:{},Date,Map});vm.runInContext(fs.readFileSync(new URL('../assets/model.js',import.meta.url),'utf8'),ctx);return ctx.window.ProcurementModel;}
 test('original request IDs retain multiple items; tracking fallback does not duplicate full rows',()=>{
@@ -22,7 +23,7 @@ test('historical configured-owner attribution is labelled and never presented as
  assert.match(result.items[0].history[0].actor,/Configured owner/);assert.match(result.items[0].history[0].remark,/not verified/);
 });
 
-function client(fetcher){const storage=new Map(),window={};const ctx=vm.createContext({window,Date,Error,JSON,Number,AbortController,setTimeout,clearTimeout,sessionStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v),removeItem:k=>storage.delete(k)},fetch:fetcher});vm.runInContext(fs.readFileSync(new URL('../assets/data.js',import.meta.url),'utf8'),ctx);return window.ProcurementData;}
+function client(fetcher,browser={}){const storage=new Map(),window={};const ctx=vm.createContext({window,Date,Error,JSON,Number,AbortController,setTimeout,clearTimeout,URL,URLSearchParams,TextEncoder,crypto:webcrypto,btoa,FormData,sessionStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v),removeItem:k=>storage.delete(k)},fetch:fetcher,...browser});vm.runInContext(fs.readFileSync(new URL('../assets/data.js',import.meta.url),'utf8'),ctx);return window.ProcurementData;}
 const response=(body,status=200)=>({ok:status<400,status,json:async()=>body});
 test('authenticated data loading paginates past 1000 rows and never writes business tables',async()=>{
  const calls=[];const api=client(async(url,options)=>{
@@ -62,4 +63,21 @@ test('submission uses the authenticated RPC with a stable client token and repor
  const call=calls.at(-1);assert.match(call.url,/rpc\/submit_procurement_request$/);assert.equal(call.options.method,'POST');assert.equal(call.options.headers.Authorization,'Bearer test-session');
  assert.deepEqual(JSON.parse(call.options.body),{client_token:'client-token',payload});
  fail=true;await assert.rejects(()=>api.submitRequest('client-token',payload),e=>e.status===400&&e.message==='Invalid quantity');
+});
+
+test('Google PKCE binds the callback to this tab and does not persist provider credentials',async()=>{
+ const storage=new Map();let destination='',cleaned='',exchange;
+ const sessionStorage={getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v),removeItem:k=>storage.delete(k)};
+ const location={href:'https://app.example.test/procurement/',assign:url=>{destination=url}};
+ const api=client(async(url,options)=>{exchange=JSON.parse(options.body);return response({access_token:'supabase-session',refresh_token:'supabase-refresh',expires_in:3600,provider_token:'sensitive-google-access',provider_refresh_token:'sensitive-google-refresh'});},{sessionStorage,location,history:{replaceState:(a,b,url)=>{cleaned=url}}});
+ await api.signInGoogle(true);const authURL=new URL(destination);assert.equal(authURL.searchParams.get('provider'),'google');assert.equal(authURL.searchParams.get('code_challenge_method'),'s256');assert(authURL.searchParams.get('scopes').includes('gmail.send'));
+ const saved=JSON.parse(storage.get('procurement-google-pkce'));assert(saved.verifier.length>=43);
+ const expected=Buffer.from(await webcrypto.subtle.digest('SHA-256',new TextEncoder().encode(saved.verifier))).toString('base64url');assert.equal(authURL.searchParams.get('code_challenge'),expected);
+ location.href='https://app.example.test/procurement/?code=synthetic-code';assert.equal(await api.consumeOAuthCallback(),true);
+ assert.deepEqual(exchange,{auth_code:'synthetic-code',code_verifier:saved.verifier});assert.equal(cleaned,'/procurement/');assert.equal(storage.has('procurement-google-pkce'),false);assert.equal(api.hasGoogleGrant(),true);
+ const persisted=storage.get('brightbots-procurement-auth-v1');assert(!persisted.includes('sensitive-google'));assert(!persisted.includes('provider_'));assert(api.hasSession());
+});
+test('Google callback without a saved verifier is rejected before exchanging a code',async()=>{
+ let calls=0;const api=client(async()=>{calls++;return response({});},{location:{href:'https://app.example.test/?code=unbound-code'},history:{replaceState:()=>{}}});
+ await assert.rejects(()=>api.consumeOAuthCallback(),/expired/);assert.equal(calls,0);assert(!api.hasSession());
 });

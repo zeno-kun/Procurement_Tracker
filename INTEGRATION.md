@@ -1,16 +1,20 @@
-# Operational integration — next phase
+# Procurement operational integration
 
-Existing records are connected through authenticated Supabase reads. The original Google Sheet remains the live workflow until a separate cutover.
+Applied in the Procurement project only:
 
-New request submission is active through `submit_procurement_request`: requester identity is derived on the server; request, items, tracking and audit are created atomically; retries are idempotent. No notification emails are sent.
+1. `database/submit_request.sql`: own-request creation with RLS and transactional RPC.
+2. `database/operational_workflow.sql`: stage RPCs, narrow current-owner reads, upload metadata and email outbox. No general browser UPDATE or DELETE privileges.
+3. `database/stage_request_read_fix.sql`: private authorization helper avoids circular RLS between requests/items/tracking.
+4. `database/google_services.sql`: service-only encrypted Google configuration, queue claiming and owner connection status.
+5. `database/stage_identity_and_batch_checks.sql`: OAuth identity and whole-request consistency checks.
+6. `database/private_connection_status.sql`: connection-status implementation stays private behind a security-invoker RPC.
 
-Remaining work:
+The `procurement-google-services` Edge Function is deployed from `backend/google-services.ts`. Gateway JWT checking is disabled because the function performs its own JWT validation against `/auth/v1/user` on every browser request before checking employee, owner and item permissions. Anonymous requests return 401. It never accepts arbitrary Google URLs, Drive destinations or mail recipients from callers.
 
-1. Complete the first authorized Procurement account setup and verify signed-in browser reads.
-2. Verify stage-by-stage permissions against the original script. This frontend change does not alter existing database policies or introduce an Admin role.
-3. Implement stage approval/edit operations with ownership checks and concurrency protection, keeping history append-only.
-4. Connect document inputs to authorized Google Drive uploads.
-5. Add audited notifications with retry and duplicate protection.
-6. Reconcile the latest Sheet without overwriting history or duplicating items, then validate complete journeys before live cutover.
+The owner must complete the Drive/email authorization described in README. No Google credential is available from the ChatGPT Drive connection to a standalone app; provider access is separately authorized and stored in Vault. Do not paste secrets into chat or source.
 
-Never weaken authentication or embed private business records in the public frontend to make data visible. TaskOps and the common dashboard are outside this change.
+Notifications are attempted after app actions and through the owner's retry button. Scheduled retries are blocked pending explicit approval. The `.proposed.sql` / `.proposed.ts` worker files are not deployed or applied.
+
+Latest source check: Procurement HTML modified 29 October 2026 09:10:37.938 UTC; checked 31 October. 541 request items unchanged; 909 catalog entries refreshed. The source Sheet remains read-only to this migration. No destructive refresh, ID replacement, history deletion, common dashboard or TaskOps change was performed.
+
+Before live cutover: finish owner Google setup, verify Google login/Drive/email with real accounts, review role access, reconcile any later Sheet changes, and choose permanent hosting. Hosting is intentionally deferred by the user.

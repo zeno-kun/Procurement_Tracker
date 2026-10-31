@@ -19,3 +19,5 @@ button{min-height:40px;font-size:15px}.search input,select,input[type=date]{font
 .catalog-suggestions>div{padding:12px;font-size:14px}
 
 .request-fields{border:0;padding:0;margin:0;min-width:0}.request-fields:disabled{opacity:.75}.id{overflow-wrap:anywhere}
+
+.google-login{width:100%;min-height:48px;margin-top:20px;background:white;border:1px solid #bdcbd7;color:#172d3b;font-size:16px}.auth-divider{text-align:center;font-size:14px!important}.vendor-summary{background:#f4f7fa;padding:12px;border-radius:8px}.vendor-summary p{margin:4px 0}#stage-action-error:not(:empty),#google-connection-error:not(:empty){color:#a03328;padding:14px}#connect-google-form{margin-top:18px}#stage-action-form .form-grid{padding-top:12px}.top-actions{flex-wrap:wrap}

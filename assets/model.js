@@ -37,9 +37,9 @@ window.ProcurementModel=(()=>{
       const events=(payload.events||[]).filter(e=>e.item_id===i.id).sort((a,b)=>String(a.completed_at).localeCompare(String(b.completed_at)));
       const history=[...(r.created?[{stage:'Request created',date:r.created,actor:r.requester,remark:'Original request timestamp'}]:[]),...events.map(e=>({stage:e.stage,date:e.completed_at,actor:e.attribution==='verified_stage_owner_action'?'Recorded stage action':'Configured owner: '+(e.owner_ids.map(id=>people.get(id)).filter(Boolean).join(' / ')||'Not available'),remark:e.attribution==='verified_stage_owner_action'?'Recorded stage measurement':'Imported measurement; historical actor not verified',grade:e.color,workingHours:e.working_hours,tatHours:e.tat_hours}))];
       const stage=i.current_stage,elapsed=stage==='Completed'||stage==='Rejected'?null:workingHours(stageStart(stage,fields),now);
-      return {id:i.id,requestId:i.request_id,name:i.item_name,code:cat?cat.code||'—':i.item_code||'—',unit:cat?.unit||'—',quantity:i.quantity,required:i.required_by,stage,elapsed,fields,history,restricted:!!i.restricted,sourceRow:i.source_row};
+      return {id:i.id,requestId:i.request_id,name:i.item_name,code:cat?cat.code||'—':i.item_code||'—',unit:fields.Unit||cat?.unit||'—',quantity:i.quantity,required:i.required_by,stage,elapsed,fields,history,restricted:!!i.restricted,version:i.version,sourceRow:i.source_row};
     });
-    return {requests,items,catalog,events:payload.events||[],profile:payload.profile,importedAt:payload.importedAt,sourceModifiedAt:payload.sourceModifiedAt,loadedAt:payload.loadedAt||now};
+    return {requests,items,catalog,events:payload.events||[],profile:payload.profile,stageOwners:payload.stageOwners||[],files:payload.files||[],connections:payload.connections||{},importedAt:payload.importedAt,sourceModifiedAt:payload.sourceModifiedAt,loadedAt:payload.loadedAt||now};
   }
   return {map,workingHours,stageStart};
 })();

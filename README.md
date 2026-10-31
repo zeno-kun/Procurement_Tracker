@@ -1,6 +1,6 @@
 # BrightBots Procurement
 
-The frontend reads existing authorized records from the separate Procurement Supabase database. Demo records and browser-local workflow mutations have been removed.
+The frontend reads authorized records and submits new requests to the separate Procurement Supabase database. Demo records and browser-local workflow mutations have been removed.
 
 ## Run
 
@@ -24,13 +24,17 @@ Opening index.html directly may work, but localhost or an HTTPS static host is r
 - The frontend contains a browser-safe Supabase **publishable key**, not a service-role key or database password. Access protection comes from database RLS, not secrecy of the publishable key.
 - The database currently contains an imported Sheet snapshot. Refresh reads the current **database**, not the latest Google Sheet. This change does not set up automatic Sheet synchronization.
 
-The baseline checked during implementation contained **192 requests, 541 item rows and 909 catalog entries**. A user can see fewer rows according to existing database permissions. At the latest check two Procurement Auth accounts existed. Sign-in still follows the project’s current email-confirmation setting.
+The baseline checked during implementation contained **192 requests, 541 item rows and 909 catalog entries**. A user can see fewer rows according to existing database permissions. Auth accounts are managed separately in the Procurement project. Sign-in still follows the project’s current email-confirmation setting.
 
 ## Current behavior
 
-This release is **read only**. It supports overview, request tracking, stage queues, Select All for inspection, original fields, quotation comparison, linked Drive documents, catalog search, CSV export and imported stage review.
+This release supports **new request submission**. Existing workflow records and approvals remain read only. It supports overview, request tracking, stage queues, Select All for inspection, original fields, quotation comparison, linked Drive documents, catalog search, CSV export and imported stage review.
 
-A visible **New request** action opens a multi-item draft form. Drafts stay in memory for the current tab; Save draft does not submit a business record. Actual submission, approvals, edits, uploads, payments and notifications are not enabled. Existing workflow writes and TaskOps remain unchanged. No new frontend Admin role, common dashboard, or Source & readiness menu was introduced. Existing database policies are not modified by this repository change.
+**New request** opens a multi-item form with live catalog search by name, column M code or column N category. The full signed-in employee name is displayed; the backend derives requester identity from Auth and the enabled employee directory. Column A is not displayed or searched.
+
+**Save draft** keeps an unsubmitted draft in memory for this tab. **Submit request** calls the authenticated, security-invoker `submit_procurement_request` RPC. It creates the request, initial Request Approval items, tracking rows and audit entries in one transaction. A client token prevents duplicate creation on retry. If a network result is uncertain, the form locks its submitted values and offers Retry submission with the same token. Keep the tab open until the result is confirmed.
+
+The approved database change is recorded in `database/submit_request.sql`. INSERT policies limit employees to their own initial requests. A narrow SELECT policy lets them read their own new initial-stage items. No UPDATE or DELETE access was added. Existing imported financial records retain their prior access rules. Approvals, existing-record edits, file uploads, payments and notification emails are not activated. TaskOps is unchanged. No new frontend Admin role, common dashboard or Source & readiness menu was introduced.
 
 Historical measurements use configured-owner attribution when the original actor was not recorded. Current open-stage timing is workload, not a finalized employee score. Invoice + Accounting share the legacy eight-working-hour target.
 

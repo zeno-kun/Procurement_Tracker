@@ -22,7 +22,7 @@ test('historical configured-owner attribution is labelled and never presented as
  assert.match(result.items[0].history[0].actor,/Configured owner/);assert.match(result.items[0].history[0].remark,/not verified/);
 });
 
-function client(fetcher){const storage=new Map(),window={};const ctx=vm.createContext({window,Date,Error,JSON,Number,sessionStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v),removeItem:k=>storage.delete(k)},fetch:fetcher});vm.runInContext(fs.readFileSync(new URL('../assets/data.js',import.meta.url),'utf8'),ctx);return window.ProcurementData;}
+function client(fetcher){const storage=new Map(),window={};const ctx=vm.createContext({window,Date,Error,JSON,Number,AbortController,setTimeout,clearTimeout,sessionStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v),removeItem:k=>storage.delete(k)},fetch:fetcher});vm.runInContext(fs.readFileSync(new URL('../assets/data.js',import.meta.url),'utf8'),ctx);return window.ProcurementData;}
 const response=(body,status=200)=>({ok:status<400,status,json:async()=>body});
 test('authenticated data loading paginates past 1000 rows and never writes business tables',async()=>{
  const calls=[];const api=client(async(url,options)=>{
@@ -46,4 +46,20 @@ test('catalog uses column M codes and N categories while resolving historical co
  assert.equal(result.catalog[0].legacyCode,'OLD-TEST');
  assert.equal(result.items[0].code,'NEW-TEST');
  assert.equal(result.items[0].name,'Test item');
+});
+
+test('submission uses the authenticated RPC with a stable client token and reports server errors',async()=>{
+ const calls=[];let fail=false;
+ const api=client(async(url,options)=>{
+  calls.push({url,options});
+  if(url.includes('/auth/v1/token'))return response({access_token:'test-session',expires_in:3600});
+  return fail?response({message:'Invalid quantity'},400):response({request_id:'REQ-SYNTHETIC',stage:'Request Approval'});
+ });
+ await assert.rejects(()=>api.submitRequest('token',{}),/Please sign in/);assert.equal(calls.length,0);
+ await api.signIn('person@example.test','test-password');
+ const payload={project:'Synthetic project',items:[{name:'Synthetic item',quantity:1,required_by:'2026-11-15'}]};
+ const result=await api.submitRequest('client-token',payload);assert.equal(result.request_id,'REQ-SYNTHETIC');
+ const call=calls.at(-1);assert.match(call.url,/rpc\/submit_procurement_request$/);assert.equal(call.options.method,'POST');assert.equal(call.options.headers.Authorization,'Bearer test-session');
+ assert.deepEqual(JSON.parse(call.options.body),{client_token:'client-token',payload});
+ fail=true;await assert.rejects(()=>api.submitRequest('client-token',payload),e=>e.status===400&&e.message==='Invalid quantity');
 });

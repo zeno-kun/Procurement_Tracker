@@ -17,3 +17,5 @@ button{min-height:40px;font-size:15px}.search input,select,input[type=date]{font
 .catalog-suggestions button{display:block;width:100%;text-align:left;white-space:normal;border:0;border-bottom:1px solid #edf0f3;border-radius:0;padding:12px;font-size:15px;background:white;color:#182d3b}
 .catalog-suggestions button:hover,.catalog-suggestions button:focus{background:#edf5fb;outline:2px solid #4a83ac;outline-offset:-2px}
 .catalog-suggestions>div{padding:12px;font-size:14px}
+
+.request-fields{border:0;padding:0;margin:0;min-width:0}.request-fields:disabled{opacity:.75}.id{overflow-wrap:anywhere}

@@ -1,5 +1,5 @@
 // Browser-safe publishable key. Data access remains controlled by Supabase RLS.
-// No service-role key, embedded business records, or database writes belong here.
+// No service-role key or embedded business records. Writes use the scoped submission RPC.
 window.ProcurementData=(()=>{
   const root='https://bezpksgfxkecfpwavndz.supabase.co';
   const key='sb_publishable_qNOYoeK7lSptBJMZwomJUw_FVSNiUNO';
@@ -24,6 +24,21 @@ window.ProcurementData=(()=>{
     const r=await fetch(root+'/rest/v1/'+path,{method:'GET',headers:{apikey:key,Authorization:'Bearer '+token,'Cache-Control':'no-cache'},cache:'no-store'});
     const data=await r.json().catch(()=>({}));if(!r.ok){if(r.status===401)clearSession();const e=new Error(data.message||'Could not read Procurement records.');e.status=r.status;throw e;}return data;
   }
+  async function submitRequest(clientToken,payload){
+    const token=await accessToken();
+    const controller=new AbortController();
+    const timer=setTimeout(()=>controller.abort(),25000);
+    try{
+      const r=await fetch(root+'/rest/v1/rpc/submit_procurement_request',{
+        method:'POST',headers:{apikey:key,Authorization:'Bearer '+token,'Content-Type':'application/json'},
+        body:JSON.stringify({client_token:clientToken,payload}),signal:controller.signal
+      });
+      const data=await r.json().catch(()=>null);
+      if(!r.ok){const e=new Error(data?.message||'Request submission failed.');e.status=r.status;throw e;}
+      if(!data?.request_id)throw new Error('The submission response was incomplete. Retry to check the same request.');
+      return data;
+    }finally{clearTimeout(timer);}
+  }
   async function all(path){const rows=[];for(let offset=0;offset<100000;offset+=1000){const part=await read(path+'&limit=1000&offset='+offset);if(!Array.isArray(part))throw Error('Invalid data response.');rows.push(...part);if(part.length<1000)return rows;}throw Error('Too many records. Please narrow the query.');}
   async function load(){
     const user=await auth('user',undefined,await accessToken());
@@ -46,6 +61,6 @@ window.ProcurementData=(()=>{
     signIn:async(email,password)=>{const d=await auth('token?grant_type=password',{email:email.trim().toLowerCase(),password});saveSession(d);return d;},
     signUp:async(email,password)=>{const d=await auth('signup',{email:email.trim().toLowerCase(),password});if(d.access_token)saveSession(d);return d;},
     signOut:async()=>{const s=readSession();clearSession();if(s?.access_token)try{await fetch(root+'/auth/v1/logout',{method:'POST',headers:{apikey:key,Authorization:'Bearer '+s.access_token}})}catch{}},
-    clearSession,load
+    clearSession,load,submitRequest
   };
 })();

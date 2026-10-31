@@ -30,7 +30,7 @@ Item names are preserved. Codes come from Item Master column M, code categories 
 
 ## Owner Drive and email setup
 
-The configured owner is **`vidit@brightbots.in`**, as explicitly requested. The app creates a separate **Procurement Tracker Supabase** folder in Vidit's My Drive during the one-time Google connection. It reuses that app-marked folder on reconnection. The earlier empty Deepali folder is not used or modified. Other employees do not connect their personal Drives.
+The configured owner is **`deepali.singh@brightbots.in`**, switched back at the user's request. Vidit's saved grant is blocked by the configured-owner check. Deepali must authorize Google again; the app creates or reuses its marked **Procurement Tracker Supabase** folder in her My Drive. Existing folders and files are unchanged. Other employees do not connect their personal Drives.
 
 1. Enable Google Drive API and Gmail API in the OAuth client's Google Cloud project.
 2. Sign into Procurement as the owner using Google.

@@ -56,3 +56,6 @@ Do not commit business-data exports, auth sessions, passwords or service-role ke
 ## Readability
 
 The interface now uses a 16 px base, larger table and field text, 44 px form controls, fluid headings and responsive grids. On narrow screens, tables scroll within their own panels instead of shrinking text or forcing the entire page wider.
+
+
+& "C:\Users\MY PC\Downloads\cloudflared.exe" tunnel --url http://localhost:3000 --protocol http2

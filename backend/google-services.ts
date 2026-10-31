@@ -4,7 +4,7 @@ const root=Deno.env.get('SUPABASE_URL');
 const serviceKey=Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 const publicKey='sb_publishable_qNOYoeK7lSptBJMZwomJUw_FVSNiUNO';
 const projectRef='bezpksgfxkecfpwavndz';
-const ownerEmail='vidit@brightbots.in';
+const ownerEmail='deepali.singh@brightbots.in';
 const cors={'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'authorization,apikey,content-type','Access-Control-Allow-Methods':'POST,OPTIONS'};
 class ApiError extends Error { constructor(message,status=400){super(message);this.status=status;} }
 const reply=(body,status=200)=>new Response(JSON.stringify(body),{status,headers:{...cors,'Content-Type':'application/json'}});

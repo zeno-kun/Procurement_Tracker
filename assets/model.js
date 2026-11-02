@@ -2,13 +2,19 @@
 window.ProcurementModel=(()=>{
   const normal=v=>String(v??'').trim().toLowerCase();
   function dateValue(v){if(typeof v!=='string'||!/^\d{4}-\d{2}-\d{2}/.test(v))return null;const date=new Date(String(v).length===10?v+'T00:00:00+05:30':v);return Number.isNaN(date.getTime())?null:date;}
-  function workingHours(start,end){
-    const a=dateValue(start),b=dateValue(end);if(!a||!b||b<a)return null;
-    let minutes=0;
-    // Match the legacy review's 15-minute working-calendar increments.
-    for(let t=a.getTime();t<b.getTime();t+=900000){const d=new Date(t+19800000),day=d.getUTCDay(),date=d.getUTCDate(),m=d.getUTCHours()*60+d.getUTCMinutes();if(day!==0&&!(day===6&&date>=8&&date<=14)&&m>=570&&m<1050)minutes+=15;}
-    return Math.round(minutes/60*100)/100;
+  function workingHours(from,to){
+    const a=dateValue(from),b=dateValue(to);if(!a||!b||b<a)return null;
+    // Count the same start-anchored 15-minute ticks, one office day at a time.
+    const start=a.getTime(),end=b.getTime(),step=900000,offset=19800000;
+    let ticks=0,day=Math.floor((start+offset)/86400000)*86400000-offset;
+    for(;day<end;day+=86400000){const d=new Date(day+offset),w=d.getUTCDay(),n=d.getUTCDate();if(w===0||(w===6&&n>=8&&n<=14))continue;
+      const lo=Math.max(0,Math.ceil((day+570*60000-start)/step));
+      const hi=Math.ceil((Math.min(end,day+1050*60000)-start)/step);
+      ticks+=Math.max(0,hi-lo);
+    }
+    return ticks/4;
   }
+
   function stageStart(stage,f){
     const fallback={
       'Request Approval':['Timestamp'],Quotation:['Request Approval Timestamp','Timestamp'],

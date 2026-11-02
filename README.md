@@ -71,3 +71,14 @@ The existing Windows command is retained:
 ```
 
 Permanent hosting and final cutover remain deferred.
+
+
+### Request-first workflow and weekly planning
+
+Stage queues group items by Request ID. Open expands the authorized request parts and stage entry form below the queue. Part selection preserves edits; Request Approval still applies to the whole pending request. Vendor comparisons and PO links use each item's saved document fields, with authenticated downloads for app uploads. The existing Documents view remains available.
+
+Review filters request creation dates and reports stage measurements separately from unique requests/items. Current open workload covers all authorized records. Queue urgency is green with more than 30% of TAT left, yellow with 30% or less, and red after TAT. Review measurements retain green within TAT, yellow within TAT plus eight working hours, and red beyond that. Invoice and Accounting share one interval that closes at accounting completion. Historical configured-owner attribution is not proof of the historical actor.
+
+Weekly Review uses Monday–Sunday IST, an April-start financial year, completed-stage actuals and weighted count percentages. Weekly Target stores integer counts in Supabase through versioned RPCs, validates their sum against server-derived carry forward and appends audit history. Carry forward excludes future stages that have not been reached; zero backlog has no percentage. New targets are suggestions until Save is clicked. Only assigned stage owners and existing reporting managers can save; Google sign-in is required. The original Sheet is unchanged.
+
+Migration: `database/20261102_weekly_targets.sql` (applied to Procurement). No Google ownership, notification routing or hosting changes are part of this update.

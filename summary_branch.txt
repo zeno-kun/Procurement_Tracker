@@ -1,0 +1,22 @@
+## summary branch
+
+- **Procurement Tracker deployed on Cloudflare Pages:**  
+  https://procurement-tracker-94k.pages.dev
+- Connected GitHub repository: **zeno-kun/Procurement_Tracker**, branch **main**. Updates pushed to `main` automatically deploy.
+- Fixed the login redirect setup by guiding the change from localhost to the Cloudflare URL.
+- **You confirmed Google login works with Vidit’s account.**
+
+The app follows: **Request → Request Approval → Quotation → Vendor Approval → PO → Fund Approval → Payment → Dispatch → QC → Invoice → Accounting → Completed.**
+
+Admins can work across all stages. Other employees retain their assigned permissions. The app includes request tracking, documents, reviews, weekly targets and bulk approval controls.
+
+**Testing still pending:**
+
+- Upload a quotation, save, refresh and open/download it.
+- Confirm notification emails reach the correct stage owners.
+- Run one request through the full workflow.
+- Check calculations, permissions, reports and mobile use.
+
+For the test request, enter **“TEST – Please ignore”** in remarks and note its generated **Request ID**. Track that ID throughout testing. It remains a real record and can affect reports and send emails; the TEST label does not exclude it automatically.
+
+The final connected Drive/Gmail owner still needs verification because earlier checks reported conflicting accounts.

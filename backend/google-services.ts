@@ -31,7 +31,7 @@ async function authorizedItem(id,token,actor,stage,version){
  const item=rows?.[0];if(!item)throw new ApiError('Item access denied',403);
  if(stage){
  const owners=await db('stage_owners?select=employee_id&stage=eq.'+encodeURIComponent(stage)+'&employee_id=eq.'+actor.id);
- if(!owners.length||item.current_stage!==stage)throw new ApiError('Only the current stage owner may upload this file',403);
+ if((actor.is_admin!==true&&!owners.length)||item.current_stage!==stage)throw new ApiError('Only an active admin or the current stage owner may upload this file',403);
  if(item.version!==Number(version))throw new ApiError('Item changed. Refresh first.',409);
  }return item;
 }
@@ -70,7 +70,7 @@ Deno.serve(async req=>{
  const token=authorization.slice(7);
  const check=await fetch(root+'/auth/v1/user',{headers:{apikey:publicKey,Authorization:authorization},signal:AbortSignal.timeout(15000)});
  const user=await check.json();if(!check.ok||!user.id||!user.email)throw new ApiError('Invalid session',401);
- const profiles=await db('employees?select=id,email,is_active&email=eq.'+encodeURIComponent(user.email),'GET',undefined,token);
+ const profiles=await db('employees?select=id,email,is_active,is_admin&email=eq.'+encodeURIComponent(user.email),'GET',undefined,token);
  const actor=profiles.find(e=>e.email===user.email&&e.is_active);if(!actor)throw new ApiError('Employee not enabled',403);
  const multipart=(req.headers.get('Content-Type')||'').startsWith('multipart/form-data');
  if(Number(req.headers.get('Content-Length')||0)>12*1024*1024)throw new ApiError('Maximum upload is 10 MB',413);

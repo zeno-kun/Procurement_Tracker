@@ -83,3 +83,28 @@ test('Deepali owner connection creates an app folder in her Drive and ignores a 
  const response=await handle(post({action:'connect',client_id:'synthetic-id',client_secret:'synthetic-secret',refresh_token:'synthetic-refresh',folder_id:'ignored-old-folder'}));
  assert.equal(response.status,200);assert.equal(folder.name,'Procurement Tracker Supabase');assert.deepEqual(folder.parents,['root']);assert.equal(stored.email,'deepali.singh@brightbots.in');assert.equal(stored.folder_id,'deepali-app-folder');assert.equal((await response.json()).folder_id,'deepali-app-folder');
 });
+
+test('an active admin can upload in an unassigned stage while retaining folder and item binding',async()=>{
+ let metadata,record,query;
+ const handle=backend(async(url,options={})=>{
+ if(url.endsWith('/auth/v1/user'))return json({id:'auth',email:'employee@example.test'});
+ if(url.includes('/employees?'))return json([{id:actorId,email:'employee@example.test',is_active:true,is_admin:true}]);
+ if(url.includes('/request_items?'))return json([{id:itemId,current_stage:'Quotation',version:3}]);
+ if(url.includes('/stage_owners?'))return json([]);
+ if(url.includes('/procurement_files?'))return json([]);
+ if(url.endsWith('/rpc/procurement_service_config'))return json({client_id:'synthetic',client_secret:'synthetic',refresh_token:'synthetic',email:'deepali.singh@brightbots.in',folder_id:'synthetic-owner-folder'});
+ if(url==='https://oauth2.googleapis.com/token')return json({access_token:'synthetic-google-token'});
+ if(url.includes('/drive/v3/files?q=')){query=new URL(url).searchParams.get('q');return json({files:[]});}
+ if(url.includes('uploadType=resumable')){metadata=JSON.parse(options.body);return new Response('',{status:200,headers:{Location:'https://www.googleapis.com/upload-session/synthetic'}});}
+ if(url==='https://www.googleapis.com/upload-session/synthetic')return json({id:'synthetic-drive-id'});
+ if(url.endsWith('/procurement_files')){record=JSON.parse(options.body);return json([record]);}throw Error('Unexpected endpoint: '+url);
+ });
+ const form=new FormData();Object.entries({action:'upload',item_id:itemId,stage:'Quotation',field_key:'Vendor 1 Quote File URL',version:3,upload_id:fileId,folder_id:'ignored-attacker-folder'}).forEach(([k,v])=>form.append(k,String(v)));form.append('file',new File(['synthetic'],'quote.pdf',{type:'application/pdf'}));
+ const response=await handle(new Request('https://edge.example.test',{method:'POST',headers:{Authorization:'Bearer '+oauthToken},body:form}));assert.equal(response.status,200);assert.deepEqual(metadata.parents,['synthetic-owner-folder']);assert.equal(metadata.appProperties.uploaded_by,actorId);assert(query.includes(itemId)&&query.includes(actorId));assert.equal(record.item_id,itemId);assert.equal(record.uploaded_by,actorId);assert.equal((await response.json()).url,'https://drive.google.com/file/d/synthetic-drive-id/view');
+});
+test('admin uploads still reject wrong stages, stale versions and disabled accounts',async()=>{
+ for(const scenario of [{stage:'PO',version:1,active:true,status:403},{stage:'Quotation',version:2,active:true,status:409},{stage:'Quotation',version:1,active:false,status:403}]){
+ const calls=[];const handle=backend(async(url)=>{calls.push(url);if(url.endsWith('/auth/v1/user'))return json({id:'auth',email:'admin@example.test'});if(url.includes('/employees?'))return json([{id:actorId,email:'admin@example.test',is_active:scenario.active,is_admin:true}]);if(url.includes('/request_items?'))return json([{id:itemId,current_stage:scenario.stage,version:scenario.version}]);if(url.includes('/stage_owners?'))return json([]);throw Error('Unexpected endpoint');});
+ const form=new FormData();Object.entries({action:'upload',item_id:itemId,stage:'Quotation',field_key:'Vendor 1 Quote File URL',version:1,upload_id:fileId,is_admin:true}).forEach(([k,v])=>form.append(k,String(v)));form.append('file',new File(['synthetic'],'quote.pdf',{type:'application/pdf'}));const response=await handle(new Request('https://edge.example.test',{method:'POST',headers:{Authorization:'Bearer '+oauthToken},body:form}));assert.equal(response.status,scenario.status);assert(!calls.some(u=>u.includes('googleapis.com')));
+ }
+});

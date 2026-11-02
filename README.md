@@ -22,7 +22,7 @@ The Google callback uses PKCE with a short-lived verifier bound to this browser 
 
 New requests save the request, items, tracking and audit atomically, with idempotent retries. The signed-in enabled employee supplies the requester identity. Drafts stay in tab memory only.
 
-All ten original stages have forms and server-side owner checks: Request Approval, Quotation, Vendor Approval, PO, Fund Approval, Payment, Dispatch, QC, Invoice and Accounting. No new Admin role or common dashboard was introduced. Stage ownership follows the existing `stage_owners` configuration. Only the current assigned owner can save a stage; general browser UPDATE/DELETE privileges remain revoked.
+All ten original stages have forms and server-side checks for active admins or assigned owners: Request Approval, Quotation, Vendor Approval, PO, Fund Approval, Payment, Dispatch, QC, Invoice and Accounting. The existing server-managed employee `is_admin` flag is honored; no new role or common dashboard is introduced. Stage ownership follows the existing `stage_owners` configuration. Only the current assigned owner can save a stage; general browser UPDATE/DELETE privileges remain revoked.
 
 Request Approval includes all pending items in a request and requires one decision for the whole request. Select All and apply-to-all controls support Vendor and Fund Approval. Up to 100 items can be saved together. Version checks reject stale changes, and retry tokens prevent duplicate stage actions. The database calculates PO base amounts, GST, payment allocation and balances. Invoice/bill upload remains mandatory for the Invoice stage. Audit entries record each action and its actor.
 
@@ -82,3 +82,8 @@ Review filters request creation dates and reports stage measurements separately 
 Weekly Review uses Monday–Sunday IST, an April-start financial year, completed-stage actuals and weighted count percentages. Weekly Target stores integer counts in Supabase through versioned RPCs, validates their sum against server-derived carry forward and appends audit history. Carry forward excludes future stages that have not been reached; zero backlog has no percentage. New targets are suggestions until Save is clicked. Only assigned stage owners and existing reporting managers can save; Google sign-in is required. The original Sheet is unchanged.
 
 Migration: `database/20261102_weekly_targets.sql` (applied to Procurement). No Google ownership, notification routing or hosting changes are part of this update.
+
+
+### Admin stage access
+
+Active employees with the existing `employees.is_admin = true` flag can enter and save any current procurement stage and upload its permitted files. Non-admin employees retain assigned-stage permissions. The frontend reads the flag from the protected employee record; the database and file backend independently recheck it. Browser users cannot update employee roles. Google sign-in, file restrictions, item version checks, validation, audit records and the configured Drive owner remain enforced. Actions outside an admin's assigned stages are recorded as verified admin actions rather than stage-owner actions. Migration: `database/admin_stage_access.sql`.

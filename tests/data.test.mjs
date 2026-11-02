@@ -29,7 +29,7 @@ test('authenticated data loading paginates past 1000 rows and never writes busin
  const calls=[];const api=client(async(url,options)=>{
   calls.push({url,options});if(url.includes('/auth/v1/token'))return response({access_token:'test-session',refresh_token:'test-refresh',expires_in:3600});
   if(url.endsWith('/auth/v1/user'))return response({email:'person@example.test'});
-  if(url.includes('/employees?select=id,email,full_name,is_active&email='))return response([{id:'p',email:'person@example.test',is_active:true}]);
+  if(url.includes('/employees?select=id,email,full_name,is_active,is_admin&email='))return response([{id:'p',email:'person@example.test',is_active:true}]);
   if(url.includes('/catalog_items?'))return response(url.includes('offset=1000')?[{source_row:1001}]:Array.from({length:1000},(_,i)=>({source_row:i+1})));
   return response([]);
  });

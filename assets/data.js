@@ -84,7 +84,7 @@ window.ProcurementData=(()=>{
   async function all(path){const rows=[];for(let offset=0;offset<100000;offset+=1000){const part=await read(path+'&limit=1000&offset='+offset);if(!Array.isArray(part))throw Error('Invalid data response.');rows.push(...part);if(part.length<1000)return rows;}throw Error('Too many records. Please narrow the query.');}
   async function load(){
     const user=await auth('user',undefined,await accessToken());
-    const profiles=await read('employees?select=id,email,full_name,is_active&email=eq.'+encodeURIComponent(user.email));
+    const profiles=await read('employees?select=id,email,full_name,is_active,is_admin&email=eq.'+encodeURIComponent(user.email));
     const profile=profiles.find(p=>p.email===user.email);if(!profile?.is_active)throw Error('This email is not enabled in the Procurement employee directory.');
     const [requests,items,tracking,catalog,events,employees,stageOwners,imports,files,connections]=await Promise.all([
       all('requests?select=*&order=requested_at.desc.nullslast,id.desc'),

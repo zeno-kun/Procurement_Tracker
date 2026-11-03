@@ -9,3 +9,6 @@ test('all ten stages expose their permitted controls, bulk approval, version and
  assert.match(form.render('Invoice',items,String,false),/accept="[^"]+" disabled/);
  assert(!/accept="[^"]+" disabled/.test(form.render('Invoice',items,String,true)));
 });
+test('stage form shows readable numbers while notification keys stay internal',()=>{
+ const window={};vm.runInNewContext(fs.readFileSync(new URL('../assets/stage-form.js',import.meta.url),'utf8'),{window});const html=window.ProcurementStageForm.render('Quotation',[{id:'item',requestId:'REQ-internal',requestLabel:'REQ-2026-000193',name:'Part',fields:{},quantity:1,unit:'Nos',version:1}],String,true);assert(html.includes('REQ-2026-000193'));assert(!html.includes('REQ-internal'));
+});

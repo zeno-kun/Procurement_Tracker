@@ -17,3 +17,6 @@ progress{appearance:none;-webkit-appearance:none;border:0;border-radius:5px;over
 .content .vendor-entry{grid-column:1/-1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;border:1px solid #afc1d4;border-radius:10px;padding:18px;background:#f7faff;min-width:0;margin:4px 0 14px}.content .vendor-entry legend{padding:0 10px;font-size:17px;font-weight:800;color:#143d66}.content .vendor-entry .form-field{min-width:0}
 .content .badge.green{background:#dff4e8;color:#155b36;border:1px solid #a5d4b8}.content .badge.yellow{background:#fff0c9;color:#725000;border:1px solid #e4ca7c}.content .badge.red{background:#ffe2e2;color:#912222;border:1px solid #e7b0b0}.content .badge.blue{background:#e2edfc;color:#204f88;border:1px solid #adc6e9}.content .notice{color:#304b65;border-color:#b9cadd;line-height:1.65}.content .report-cards .card .label{font-weight:700;color:#314c67}.content .report-cards .card strong{color:#153c65}.content .report-cards .card small{color:#40566c}
 @media(max-width:600px){.content .item-box>h3,.content .item-box>.item-title{font-size:18px;padding:14px}.content .vendor-entry{grid-template-columns:1fr;padding:14px}.content .field{font-size:16px}}
+
+/* Keep the human-facing reference readable on one line. */
+.content td.id{white-space:nowrap}

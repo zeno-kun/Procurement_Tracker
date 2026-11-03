@@ -81,3 +81,6 @@ test('Google callback without a saved verifier is rejected before exchanging a c
  let calls=0;const api=client(async()=>{calls++;return response({});},{location:{href:'https://app.example.test/?code=unbound-code'},history:{replaceState:()=>{}}});
  await assert.rejects(()=>api.consumeOAuthCallback(),/expired/);assert.equal(calls,0);assert(!api.hasSession());
 });
+test('readable request numbers preserve internal relationships and legacy IDs',()=>{
+ const m=model(),internal='REQ-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb';const result=m.map({requests:[{id:internal,display_id:'REQ-2026-000193'},{id:'REQ-1791875166355'}],items:[{id:'i',request_id:internal,item_name:'Part',data:{},current_stage:'Quotation'}]});assert.equal(result.requests[0].id,internal);assert.equal(result.requests[0].displayId,'REQ-2026-000193');assert.equal(result.items[0].requestId,internal);assert.equal(result.items[0].requestLabel,'REQ-2026-000193');assert.equal(result.requests[1].displayId,'REQ-1791875166355');
+});

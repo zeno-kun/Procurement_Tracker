@@ -105,7 +105,7 @@ window.ProcurementData=(()=>{
     signIn:async(email,password)=>{const d=await auth('token?grant_type=password',{email:email.trim().toLowerCase(),password});saveSession(d);return d;},
     signUp:async(email,password)=>{const d=await auth('signup',{email:email.trim().toLowerCase(),password});if(d.access_token)saveSession(d);return d;},
     signOut:async()=>{const s=readSession();clearSession();if(s?.access_token)try{await fetch(root+'/auth/v1/logout',{method:'POST',headers:{apikey:key,Authorization:'Bearer '+s.access_token}})}catch{}},
-    clearSession,load,submitRequest,rpc,signInGoogle,consumeOAuthCallback,connectGoogleServices,hasGoogleGrant:()=>!!pendingGoogle?.refresh_token,notifyMail,uploadFile,downloadFile,
+    clearSession,load,submitRequest,rpc,getDashboardToken:accessToken,signInGoogle,consumeOAuthCallback,connectGoogleServices,hasGoogleGrant:()=>!!pendingGoogle?.refresh_token,notifyMail,uploadFile,downloadFile,
     stageAction:(stage,items,common,clientToken)=>rpc('apply_procurement_stage',{stage,items,common,client_token:clientToken})
   };
 })();

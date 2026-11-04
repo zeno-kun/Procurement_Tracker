@@ -21,3 +21,23 @@ h1,h2,h3,.card strong,.pipeline-tile strong{font-family:Arial,Helvetica,sans-ser
 .content .vendor-entry{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));gap:16px;min-width:0;width:100%;margin:0;padding:16px;border:1px solid #ccd9ea;border-radius:8px;background:#f8fbff}
 .content .vendor-entry legend{display:block;padding:0 8px;font-size:15px;font-weight:700;color:#173d78}
 .content .form-field{min-width:0}.content .form-field label{display:block;line-height:1.5;overflow-wrap:anywhere}.content .form-field input,.content .form-field select,.content .form-field textarea{width:100%;max-width:100%;min-width:0}.content .form-field small{display:block;margin-top:5px;overflow-wrap:anywhere}.content .vendor-entry .form-field:has(input[type=file]){grid-column:1/-1}
+
+/* Compact stage workspace: retain readable controls while reducing unused space. */
+.content #stage-action-form .notice{margin-bottom:8px;padding:8px 12px}
+.content #stage-action-form .select-bar{margin:8px 14px;padding:8px 12px}
+.content #stage-action-form .form-grid.padded{padding:8px 14px;gap:10px 14px}
+.content #stage-action-form .form-grid.padded:empty{display:none}
+.content #stage-action-form .item-box{margin:10px 0;padding:12px 14px;background:#fbfcfe}
+.content #stage-action-form .item-box>h3{margin:0 0 4px;padding:4px 0;font-size:17px;line-height:1.4;background:transparent}
+.content #stage-action-form .item-box>p{margin:0 0 8px;line-height:1.4;font-size:13px}
+.content #stage-action-form .quote-comparison{margin:0 0 8px}
+.content #stage-action-form .quote-comparison caption{padding:6px 0;font-size:14px;background:transparent}
+.content #stage-action-form .quote-comparison th,.content #stage-action-form .quote-comparison td{padding:6px 10px}
+.content #stage-action-form .item-box>.form-grid{gap:10px 14px;padding-top:4px}
+.content #stage-action-form .form-field label{margin-bottom:4px;font-size:14px;line-height:1.4}
+.content #stage-action-form .form-field textarea{min-height:64px;padding:8px 10px}
+.content #stage-action-form:has([data-stage-key='Approved Vendor Type']) .item-box>.form-grid{grid-template-columns:minmax(170px,1fr) minmax(180px,1fr) minmax(260px,2fr);align-items:start}
+.content #stage-action-form:has([data-stage-key='Approved Vendor Type']) .form-field:has([data-stage-key='Approval Remarks']){grid-column:auto}
+.content #stage-action-form .vendor-entry{padding:12px;gap:10px 14px}
+@media(max-width:1100px){.content #stage-action-form:has([data-stage-key='Approved Vendor Type']) .item-box>.form-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.content #stage-action-form:has([data-stage-key='Approved Vendor Type']) .form-field:has([data-stage-key='Approval Remarks']){grid-column:1/-1}}
+@media(max-width:760px){.content #stage-action-form:has([data-stage-key='Approved Vendor Type']) .item-box>.form-grid{grid-template-columns:1fr}.content #stage-action-form .item-box{padding:12px}.content #stage-action-form .form-field textarea{min-height:72px}}

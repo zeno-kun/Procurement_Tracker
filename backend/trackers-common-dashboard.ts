@@ -15,7 +15,6 @@ async function authorize(token){
  // Auth server verifies the token; unverified JWT metadata never grants access.
  const user=await readJson('https://'+issuer+'.supabase.co/auth/v1/user',{apikey:projects[issuer].key,Authorization:'Bearer '+token});
  if(!user.id||!user.email)throw new AccessError('Sign in again.',401);
- if(!claims.amr?.some(v=>v.method==='oauth'))throw new AccessError('Use Continue with Google in your tracker before opening the common dashboard.');
  const source=await profileFor(issuer,user,token);
  if(issuer!==localRef){const path=projects[localRef].name==='taskops'?'profiles?select=id,email,full_name,role,is_active,is_sample&email=eq.':'employees?select=id,email,full_name,is_admin,is_active&email=eq.';const rows=await readJson(root+'/rest/v1/'+path+encodeURIComponent(user.email),{apikey:service,Authorization:'Bearer '+service});if(!rows.some(p=>p.is_active===true&&p.is_sample!==true&&p.email.toLowerCase()===user.email.toLowerCase()&&(projects[localRef].name==='taskops'?p.role==='ADMIN':p.is_admin===true)))throw new AccessError('Admin access is also required in '+projects[localRef].name+'.');}
  return {email:user.email,name:source.full_name,issuer};

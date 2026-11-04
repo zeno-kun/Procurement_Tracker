@@ -1,7 +1,7 @@
 grant execute on function procurement_private.weekly_intervals(),procurement_private.weekly_stamp(text),procurement_private.work_hours(timestamptz,timestamptz) to service_role;
 create function public.trackers_common_snapshot(p_week_start date) returns jsonb language sql stable security invoker set search_path='' as $$
 with params as(select (p_week_start-(extract(isodow from p_week_start)::int-1)) week_start),
-people as(select id,lower(btrim(email)) email,full_name from public.employees where is_active),
+people as(select id,lower(btrim(email)) email,full_name from public.employees where is_active and lower(btrim(email)) in ('ankesh.k@brightbots.in','amandeep@brightbots.in','quality@brightbots.in','amit.k@brightbots.in','ramesh@brightbots.in','vinay@brightbots.in')),
 intervals as(select * from procurement_private.weekly_intervals()),
 work as(select i.id,i.request_id,i.current_stage,procurement_private.work_hours(x.started_at,now()) hours,case i.current_stage when 'Request Approval' then 8 when 'Quotation' then 24 when 'Vendor Approval' then 8 when 'PO' then 6 when 'Fund Approval' then 4 when 'Payment' then 16 when 'Dispatch' then 24 when 'QC' then 6 else 8 end tat from public.request_items i left join intervals x on x.item_id=i.id and x.stage=case when i.current_stage in ('Invoice','Accounting') then 'Invoice + Accounting' else i.current_stage end and x.completed_at is null where i.current_stage not in ('Completed','Rejected')),
 assigned as(select distinct p.id employee_id,w.id,w.hours,w.tat from work w join public.stage_owners s on s.stage=w.current_stage join people p on p.id=s.employee_id),

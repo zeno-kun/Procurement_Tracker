@@ -55,3 +55,32 @@ h1,h2,h3,.card strong,.pipeline-tile strong{font-family:Arial,Helvetica,sans-ser
 @media(max-width:760px){.content .field-grid{grid-template-columns:1fr}.content td,.content td b,.content td strong,.content td small,.content td .id,.content td.id{font-size:14px}.weekly-legacy{padding:9px}.weekly-actions{width:100%}.weekly-actions label{flex-wrap:wrap}.content #stage-action-form .form-field textarea{min-height:54px;height:54px}}
 
 .weekly-legacy .weekly-matrix td small{display:none}.weekly-legacy .weekly-matrix td{padding:8px 6px;line-height:1.4}.weekly-legacy .weekly-matrix td:last-child{min-width:92px}.weekly-legacy .weekly-matrix td button{line-height:1.35}.weekly-legacy .report-note{margin:5px 0!important;padding:6px 12px}
+/* Content-sized fields and compact owner targets; empty values add no detail row. */
+.content td small:empty{display:none}
+.content .field-grid{grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr))}
+.content #stage-action-form:has([data-stage-key='Recommended Vendor']) .item-box>.form-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.content #stage-action-form .vendor-entry{grid-column:auto;display:grid;grid-template-columns:minmax(0,1fr);width:auto;min-width:0;padding:10px;gap:8px}
+.content #stage-action-form .vendor-entry legend{font-size:14px;padding:0 5px}
+.content #stage-action-form .vendor-entry input{min-height:32px}
+.content #stage-action-form .vendor-entry input[type=file]{width:100%;padding:4px;font-size:12px}
+.content #stage-action-form .vendor-entry small{font-size:11px;line-height:1.4;margin-top:3px}
+.content #stage-action-form .form-grid.padded:empty{display:none}
+.content .target-entry .panel{padding:10px;margin:0}
+.content .target-entry h2{font-size:16px;margin:0 0 8px;padding:0}
+.content .target-entry h2 small{font-size:12px;font-weight:500}
+.content #weekly-target-form table{min-width:900px;width:100%;table-layout:auto}
+.content #weekly-target-form th{background:#153f80;text-align:center;padding:8px;font-size:12px}
+.content #weekly-target-form td{padding:7px 8px;font-size:13px;text-align:center;vertical-align:middle}
+.content #weekly-target-form td:nth-child(-n+2){text-align:left}
+.content #weekly-target-form .target-owner td{background:#eff6ff;text-align:left;font-size:12px;padding:7px 10px}
+.content #weekly-target-form input{width:48px;min-height:30px;padding:4px 5px;margin-right:7px;font-size:13px}
+.content #weekly-target-form output{display:inline-block;min-width:43px;font-size:12px}
+.content #weekly-target-form .mini{padding:5px 7px;min-height:28px;font-size:11px}
+.content .target-notes{padding:0;font-size:12px;margin:6px 0}
+.content #target-validation{padding:8px 10px;border:1px solid #a4dfb6;border-radius:5px;background:#effcf3;color:#086e36;font-size:12px;margin:8px 0}
+.content #weekly-target-form:has(.invalid-target) #target-validation{background:#fff3f3;border-color:#ecb2b2;color:#9b2525}
+.target-save{display:flex;justify-content:flex-end}
+@media(max-width:1150px){.content #stage-action-form:has([data-stage-key='Recommended Vendor']) .item-box>.form-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:760px){.content #stage-action-form:has([data-stage-key='Recommended Vendor']) .item-box>.form-grid{grid-template-columns:minmax(0,1fr)}}
+
+.content #weekly-target-form .target-owner b{display:inline;font-size:12px;font-weight:600}.content #weekly-target-form td{padding:5px 8px;line-height:1.35}.content #weekly-target-form input{min-height:28px}.content #weekly-target-form .target-owner td{padding:7px 10px}

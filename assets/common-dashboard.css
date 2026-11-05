@@ -4,3 +4,11 @@
 
 /* Compact common tracker presentation, with equal emphasis for names and codes. */
 header{padding:12px 20px}header strong{font-size:18px}main{padding:18px 20px}.intro{margin:0 0 12px;gap:12px}h1{font-size:24px;margin:5px 0 6px}.intro p{line-height:1.45}.connection-panel{padding:8px 12px;margin-bottom:12px;gap:12px}.tabs{margin-bottom:12px}.cards{gap:10px;margin-bottom:10px}.card{padding:12px 14px}.card strong{font-size:27px;margin:6px 0}.card span,.card small{font-size:13px}.explanation{padding:8px 12px;line-height:1.55;margin:10px 0}.panel{margin:10px 0}.panel-head{padding:10px 12px}.panel h2{font-size:18px;margin-bottom:4px}.panel-head p{font-size:13px}.table-wrap{max-height:70vh}th{padding:9px;font-size:13px}td{padding:8px 9px;font-size:14px;font-weight:500;line-height:1.45}td b,td small{font-size:14px;font-weight:500;color:#20354a;line-height:1.45}td small{margin-top:2px}.table-foot{padding:8px 12px;font-size:13px}footer{margin:12px 0;font-size:13px}.totals-note,details{padding:8px 12px;font-size:13px}.score-cell span{font-size:13px}.panel-head #employee-search{min-height:36px}.source-pair span{font-size:13px}@media(max-width:600px){header{padding:12px 14px}main{padding:14px}.cards{gap:8px}.card{padding:10px}.card strong{font-size:25px}.intro h1{font-size:23px}.filters{margin-top:12px}}
+/* Blank results stay blank; let the table and cards grow with actual content. */
+td small:empty{display:none}.score-cell:empty{display:none}
+.cards{grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
+.card{padding:10px 12px}.card strong{min-height:0;margin:6px 0}
+table{table-layout:auto;min-width:850px}td{padding:6px 9px}td small{margin-top:2px}
+.panel-head{padding:9px 12px}.panel-head h2{margin-bottom:3px}
+.explanation{margin:10px 0;padding:8px 12px}.empty,.error-box{padding:14px 16px}
+@media(max-width:600px){.cards{grid-template-columns:repeat(2,minmax(0,1fr))}}

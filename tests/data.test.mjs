@@ -13,7 +13,7 @@ test('original request IDs retain multiple items; tracking fallback does not dup
 });
 test('legacy working calendar excludes Sundays and second Saturdays, but includes other Saturdays',()=>{
  const m=model();assert.equal(m.workingHours('2026-10-09T17:30:00+05:30','2026-10-12T09:30:00+05:30'),0);
- assert.equal(m.workingHours('2026-10-17T09:30:00+05:30','2026-10-17T17:30:00+05:30'),8);
+ assert.equal(m.workingHours('2026-10-17T09:30:00+05:30','2026-10-17T17:00:00+05:30'),7.5);
  assert.equal(m.workingHours(46285,'2026-10-28'),null);
  assert.equal(m.workingHours('2026-10-28','2026-10-01'),null);
  assert.equal(m.stageStart('Accounting',{'QC Timestamp':'2026-10-01','Invoice Timestamp':'2026-10-02'}),'2026-10-01');
